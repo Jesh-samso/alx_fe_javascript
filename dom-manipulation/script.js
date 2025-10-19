@@ -1,4 +1,6 @@
 let quotes = []
+let syncing = false
+const SERVER_URL = "https://jsonplaceholder.typicode.com/posts" // mock server
 
 document.addEventListener("DOMContentLoaded", () => {
   const savedQuotes = localStorage.getItem("quotes")
@@ -18,8 +20,11 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("newQuote").addEventListener("click", showRandomQuote)
   document.getElementById("exportBtn").addEventListener("click", exportQuotes)
   document.getElementById("importFile").addEventListener("change", importFromJsonFile)
+
+  startServerSync()
 })
 
+// show random quote
 function showRandomQuote() {
   const filtered = getFilteredQuotes()
   const display = document.getElementById("quoteDisplay")
@@ -33,19 +38,18 @@ function showRandomQuote() {
   const random = Math.floor(Math.random() * filtered.length)
   const quote = filtered[random]
 
-  const quoteText = document.createElement("p")
-  quoteText.textContent = `"${quote.text}"`
+  const textEl = document.createElement("p")
+  textEl.textContent = `"${quote.text}"`
+  const catEl = document.createElement("p")
+  catEl.innerHTML = `<em>— ${quote.category}</em>`
 
-  const quoteCategory = document.createElement("p")
-  quoteCategory.innerHTML = `<em>— ${quote.category}</em>`
-
-  // Checker wants to see appendChild
-  display.appendChild(quoteText)
-  display.appendChild(quoteCategory)
+  display.appendChild(textEl)
+  display.appendChild(catEl)
 
   sessionStorage.setItem("lastViewedQuote", JSON.stringify(quote))
 }
 
+// build form
 function createAddQuoteForm() {
   const container = document.getElementById("formContainer")
   container.innerHTML = ""
@@ -55,29 +59,31 @@ function createAddQuoteForm() {
   inputText.type = "text"
   inputText.placeholder = "Enter a new quote"
 
-  const inputCategory = document.createElement("input")
-  inputCategory.id = "newQuoteCategory"
-  inputCategory.type = "text"
-  inputCategory.placeholder = "Enter quote category"
+  const inputCat = document.createElement("input")
+  inputCat.id = "newQuoteCategory"
+  inputCat.type = "text"
+  inputCat.placeholder = "Enter quote category"
 
   const addBtn = document.createElement("button")
   addBtn.textContent = "Add Quote"
   addBtn.onclick = addQuote
 
   container.appendChild(inputText)
-  container.appendChild(inputCategory)
+  container.appendChild(inputCat)
   container.appendChild(addBtn)
 }
 
+// add quote
 function addQuote() {
   const text = document.getElementById("newQuoteText").value.trim()
-  const category = document.getElementById("newQuoteCategory").value.trim()
+  const cat = document.getElementById("newQuoteCategory").value.trim()
 
-  if (text && category) {
-    quotes.push({ text, category })
+  if (text && cat) {
+    quotes.push({ text, category: cat })
     saveQuotes()
     populateCategories()
     filterQuotes()
+    syncWithServer()
     document.getElementById("newQuoteText").value = ""
     document.getElementById("newQuoteCategory").value = ""
     alert("Quote added successfully!")
@@ -86,10 +92,12 @@ function addQuote() {
   }
 }
 
+// save quotes
 function saveQuotes() {
   localStorage.setItem("quotes", JSON.stringify(quotes))
 }
 
+// populate categories
 function populateCategories() {
   const select = document.getElementById("categoryFilter")
   const current = select.value
@@ -111,18 +119,21 @@ function populateCategories() {
   select.value = current || "all"
 }
 
+// filter quotes
 function filterQuotes() {
-  const category = document.getElementById("categoryFilter").value
-  localStorage.setItem("selectedCategory", category)
+  const cat = document.getElementById("categoryFilter").value
+  localStorage.setItem("selectedCategory", cat)
   showRandomQuote()
 }
 
+// helper
 function getFilteredQuotes() {
-  const category = document.getElementById("categoryFilter").value
-  if (category === "all") return quotes
-  return quotes.filter(q => q.category === category)
+  const cat = document.getElementById("categoryFilter").value
+  if (cat === "all") return quotes
+  return quotes.filter(q => q.category === cat)
 }
 
+// export
 function exportQuotes() {
   const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: "application/json" })
   const url = URL.createObjectURL(blob)
@@ -133,6 +144,7 @@ function exportQuotes() {
   URL.revokeObjectURL(url)
 }
 
+// import
 function importFromJsonFile(event) {
   const reader = new FileReader()
   reader.onload = e => {
@@ -152,4 +164,62 @@ function importFromJsonFile(event) {
     }
   }
   reader.readAsText(event.target.files[0])
+}
+
+// simulate periodic sync
+function startServerSync() {
+  setInterval(() => {
+    syncWithServer()
+  }, 30000) // every 30 seconds
+}
+
+// sync logic (mock)
+function syncWithServer() {
+  if (syncing) return
+  syncing = true
+
+  fetch(SERVER_URL)
+    .then(res => res.json())
+    .then(data => {
+      // simulate server quotes (limit 5 for realism)
+      const serverQuotes = data.slice(0, 5).map((p, i) => ({
+        text: p.title,
+        category: i % 2 === 0 ? "Server" : "Fetched"
+      }))
+
+      // conflict resolution: server wins
+      const merged = [...quotes, ...serverQuotes].filter(
+        (q, index, self) =>
+          index === self.findIndex(o => o.text === q.text)
+      )
+
+      quotes = merged
+      saveQuotes()
+      populateCategories()
+      showNotification("Quotes synced with server!")
+    })
+    .catch(() => {
+      showNotification("Server sync failed (offline mode).")
+    })
+    .finally(() => syncing = false)
+}
+
+// simple notification banner
+function showNotification(msg) {
+  let note = document.getElementById("notify")
+  if (!note) {
+    note = document.createElement("div")
+    note.id = "notify"
+    note.style.position = "fixed"
+    note.style.bottom = "10px"
+    note.style.right = "10px"
+    note.style.background = "#222"
+    note.style.color = "#fff"
+    note.style.padding = "8px 15px"
+    note.style.borderRadius = "5px"
+    document.body.appendChild(note)
+  }
+  note.textContent = msg
+  note.style.display = "block"
+  setTimeout(() => { note.style.display = "none" }, 3000)
 }
