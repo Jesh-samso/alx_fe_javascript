@@ -165,40 +165,39 @@ function importFromJsonFile(event) {
   reader.readAsText(event.target.files[0])
 }
 
-// 🟢 fetch quotes from mock server
-function fetchQuotesFromServer() {
-  return fetch(SERVER_URL)
-    .then(res => res.json())
-    .then(data => {
-      return data.slice(0, 5).map((p, i) => ({
-        text: p.title,
-        category: i % 2 === 0 ? "Server" : "Fetched"
-      }))
-    })
+// 🟢 async/await fetch function
+async function fetchQuotesFromServer() {
+  try {
+    const res = await fetch(SERVER_URL)
+    const data = await res.json()
+    return data.slice(0, 5).map((p, i) => ({
+      text: p.title,
+      category: i % 2 === 0 ? "Server" : "Fetched"
+    }))
+  } catch (err) {
+    console.error("Error fetching from server:", err)
+    return []
+  }
 }
 
-// 🔁 sync logic
-function syncWithServer() {
+// 🔁 async sync logic
+async function syncWithServer() {
   if (syncing) return
   syncing = true
-
-  fetchQuotesFromServer()
-    .then(serverQuotes => {
-      // simple conflict resolution: server wins
-      const merged = [...quotes, ...serverQuotes].filter(
-        (q, index, self) =>
-          index === self.findIndex(o => o.text === q.text)
-      )
-
-      quotes = merged
-      saveQuotes()
-      populateCategories()
-      showNotification("Quotes synced with server!")
-    })
-    .catch(() => {
-      showNotification("Server sync failed. Working offline.")
-    })
-    .finally(() => syncing = false)
+  try {
+    const serverQuotes = await fetchQuotesFromServer()
+    const merged = [...quotes, ...serverQuotes].filter(
+      (q, i, self) => i === self.findIndex(o => o.text === q.text)
+    )
+    quotes = merged
+    saveQuotes()
+    populateCategories()
+    showNotification("Quotes synced with server!")
+  } catch {
+    showNotification("Server sync failed. Working offline.")
+  } finally {
+    syncing = false
+  }
 }
 
 // periodic auto-sync
