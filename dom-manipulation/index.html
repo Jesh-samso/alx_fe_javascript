@@ -7,75 +7,54 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f7f7f7;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px;
-    }
-
-    h1 {
+      background: #f5f5f5;
       color: #333;
-      margin-bottom: 20px;
-    }
-
-    #quoteDisplay {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      width: 80%;
-      max-width: 500px;
       text-align: center;
-      margin-bottom: 20px;
-      min-height: 80px;
+      margin: 0;
+      padding: 20px;
     }
-
+    h1 {
+      color: #222;
+    }
+    #quoteDisplay {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 20px auto;
+      width: 80%;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
     button {
-      padding: 10px 20px;
-      background: #007bff;
+      background-color: #007BFF;
       color: white;
       border: none;
+      padding: 10px 15px;
       border-radius: 5px;
       cursor: pointer;
-      margin: 5px;
-      font-size: 15px;
+      margin-top: 10px;
     }
-
     button:hover {
-      background: #0056b3;
+      background-color: #0056b3;
     }
-
+    .form-section {
+      margin-top: 25px;
+    }
     input {
-      padding: 10px;
+      padding: 8px;
       margin: 5px;
-      width: 200px;
-      border: 1px solid #ccc;
       border-radius: 5px;
-    }
-
-    div.form-section {
-      margin-top: 20px;
+      border: 1px solid #ccc;
+      width: 200px;
     }
   </style>
 </head>
 <body>
+
   <h1>Dynamic Quote Generator</h1>
-
-  <!-- Quote Display Area -->
+  
   <div id="quoteDisplay"></div>
-
-  <!-- Show New Quote Button -->
   <button id="newQuote">Show New Quote</button>
 
-  <!-- Add New Quote Section -->
-  <div class="form-section">
-    <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
-    <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
-    <button onclick="addQuote()">Add Quote</button>
-  </div>
-
-  <!-- External JavaScript -->
   <script src="script.js"></script>
 </body>
 </html>
