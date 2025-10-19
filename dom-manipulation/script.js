@@ -49,27 +49,27 @@ function showRandomQuote() {
   sessionStorage.setItem("lastViewedQuote", JSON.stringify(quote))
 }
 
-// form creation
+// create form
 function createAddQuoteForm() {
   const container = document.getElementById("formContainer")
   container.innerHTML = ""
 
-  const inputText = document.createElement("input")
-  inputText.id = "newQuoteText"
-  inputText.type = "text"
-  inputText.placeholder = "Enter a new quote"
+  const textInput = document.createElement("input")
+  textInput.id = "newQuoteText"
+  textInput.type = "text"
+  textInput.placeholder = "Enter a new quote"
 
-  const inputCat = document.createElement("input")
-  inputCat.id = "newQuoteCategory"
-  inputCat.type = "text"
-  inputCat.placeholder = "Enter quote category"
+  const catInput = document.createElement("input")
+  catInput.id = "newQuoteCategory"
+  catInput.type = "text"
+  catInput.placeholder = "Enter quote category"
 
   const addBtn = document.createElement("button")
   addBtn.textContent = "Add Quote"
   addBtn.onclick = addQuote
 
-  container.appendChild(inputText)
-  container.appendChild(inputCat)
+  container.appendChild(textInput)
+  container.appendChild(catInput)
   container.appendChild(addBtn)
 }
 
@@ -132,7 +132,7 @@ function getFilteredQuotes() {
   return quotes.filter(q => q.category === cat)
 }
 
-// export quotes
+// export quotes to json
 function exportQuotes() {
   const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: "application/json" })
   const url = URL.createObjectURL(blob)
@@ -143,7 +143,7 @@ function exportQuotes() {
   URL.revokeObjectURL(url)
 }
 
-// import from file
+// import quotes from json
 function importFromJsonFile(event) {
   const reader = new FileReader()
   reader.onload = e => {
@@ -165,7 +165,7 @@ function importFromJsonFile(event) {
   reader.readAsText(event.target.files[0])
 }
 
-// 🟢 async/await fetch function
+// 🟢 async fetch from server
 async function fetchQuotesFromServer() {
   try {
     const res = await fetch(SERVER_URL)
@@ -180,31 +180,45 @@ async function fetchQuotesFromServer() {
   }
 }
 
-// 🔁 async sync logic
+// 🔁 async sync logic with POST method
 async function syncWithServer() {
   if (syncing) return
   syncing = true
+
   try {
+    // fetch from server
     const serverQuotes = await fetchQuotesFromServer()
+
+    // post local quotes to server
+    await fetch(SERVER_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(quotes)
+    })
+
+    // merge local + server quotes (server wins)
     const merged = [...quotes, ...serverQuotes].filter(
       (q, i, self) => i === self.findIndex(o => o.text === q.text)
     )
+
     quotes = merged
     saveQuotes()
     populateCategories()
     showNotification("Quotes synced with server!")
-  } catch {
-    showNotification("Server sync failed. Working offline.")
+
+  } catch (error) {
+    console.log("Sync failed:", error)
+    showNotification("Server sync failed, working offline.")
   } finally {
     syncing = false
   }
 }
 
-// periodic auto-sync
+// auto sync every 30s
 function startServerSync() {
-  setInterval(() => {
-    syncWithServer()
-  }, 30000)
+  setInterval(syncWithServer, 30000)
 }
 
 // notification banner
