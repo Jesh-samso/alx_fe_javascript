@@ -1,15 +1,15 @@
-// Quotes array
+// ===== Quotes Array =====
 let quotes = [
   { text: "The best way to predict the future is to invent it.", category: "Inspiration" },
   { text: "Code is like humor. When you have to explain it, it’s bad.", category: "Programming" },
   { text: "Simplicity is the soul of efficiency.", category: "Design" }
 ];
 
-// Select elements
+// ===== Select Elements =====
 const quoteDisplay = document.getElementById("quoteDisplay");
 const newQuoteButton = document.getElementById("newQuote");
 
-// ===== Function: showRandomQuote (Displays a random quote) =====
+// ===== Function: Display a Random Quote =====
 function showRandomQuote() {
   if (quotes.length === 0) {
     quoteDisplay.textContent = "No quotes available.";
@@ -25,23 +25,23 @@ function showRandomQuote() {
   `;
 }
 
-// ===== Function: addQuote (Adds new quote to array + updates DOM) =====
+// ===== Function: Add a New Quote and Update DOM =====
 function addQuote() {
   const quoteText = document.getElementById("newQuoteText").value.trim();
   const quoteCategory = document.getElementById("newQuoteCategory").value.trim();
 
   if (quoteText === "" || quoteCategory === "") {
-    alert("Please fill in both fields!");
+    alert("Please enter both quote and category!");
     return;
   }
 
-  // Add new quote object to the array
+  // Add to quotes array
   const newQuote = { text: quoteText, category: quoteCategory };
   quotes.push(newQuote);
 
-  // Update the DOM to show confirmation
+  // Update DOM with confirmation
   quoteDisplay.innerHTML = `
-    <p><strong>New quote added:</strong></p>
+    <p><strong>New quote added!</strong></p>
     <p>"${quoteText}"</p>
     <p><em>Category:</em> ${quoteCategory}</p>
   `;
@@ -51,8 +51,8 @@ function addQuote() {
   document.getElementById("newQuoteCategory").value = "";
 }
 
-// ===== Event Listener for “Show New Quote” Button =====
+// ===== Event Listener for Show New Quote Button =====
 newQuoteButton.addEventListener("click", showRandomQuote);
 
-// Show a quote on page load
+// Show an initial quote on page load
 showRandomQuote();
