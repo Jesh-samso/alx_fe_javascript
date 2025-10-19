@@ -44,6 +44,7 @@ function addQuote() {
   if (!newText || !newCategory) {
     alert("Please fill in both quote text and category.");
     return;
+    
   }
 
   // Create a new quote object and add it to the array
