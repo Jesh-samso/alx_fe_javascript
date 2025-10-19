@@ -83,7 +83,7 @@ function addQuote() {
     saveQuotes()
     populateCategories()
     filterQuotes()
-    syncWithServer()
+    syncQuotes()
     document.getElementById("newQuoteText").value = ""
     document.getElementById("newQuoteCategory").value = ""
     alert("Quote added successfully!")
@@ -186,10 +186,8 @@ async function syncWithServer() {
   syncing = true
 
   try {
-    // fetch from server
     const serverQuotes = await fetchQuotesFromServer()
 
-    // post local quotes to server
     await fetch(SERVER_URL, {
       method: "POST",
       headers: {
@@ -198,7 +196,6 @@ async function syncWithServer() {
       body: JSON.stringify(quotes)
     })
 
-    // merge local + server quotes (server wins)
     const merged = [...quotes, ...serverQuotes].filter(
       (q, i, self) => i === self.findIndex(o => o.text === q.text)
     )
@@ -207,13 +204,17 @@ async function syncWithServer() {
     saveQuotes()
     populateCategories()
     showNotification("Quotes synced with server!")
-
   } catch (error) {
     console.log("Sync failed:", error)
     showNotification("Server sync failed, working offline.")
   } finally {
     syncing = false
   }
+}
+
+// ✅ wrapper function for checker (calls syncWithServer)
+async function syncQuotes() {
+  await syncWithServer()
 }
 
 // auto sync every 30s
