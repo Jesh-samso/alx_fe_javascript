@@ -1,6 +1,6 @@
 let quotes = []
 let syncing = false
-const SERVER_URL = "https://jsonplaceholder.typicode.com/posts" // mock server
+const SERVER_URL = "https://jsonplaceholder.typicode.com/posts"
 
 document.addEventListener("DOMContentLoaded", () => {
   const savedQuotes = localStorage.getItem("quotes")
@@ -49,7 +49,7 @@ function showRandomQuote() {
   sessionStorage.setItem("lastViewedQuote", JSON.stringify(quote))
 }
 
-// build form
+// form creation
 function createAddQuoteForm() {
   const container = document.getElementById("formContainer")
   container.innerHTML = ""
@@ -92,7 +92,7 @@ function addQuote() {
   }
 }
 
-// save quotes
+// save locally
 function saveQuotes() {
   localStorage.setItem("quotes", JSON.stringify(quotes))
 }
@@ -119,21 +119,20 @@ function populateCategories() {
   select.value = current || "all"
 }
 
-// filter quotes
+// filter by category
 function filterQuotes() {
   const cat = document.getElementById("categoryFilter").value
   localStorage.setItem("selectedCategory", cat)
   showRandomQuote()
 }
 
-// helper
 function getFilteredQuotes() {
   const cat = document.getElementById("categoryFilter").value
   if (cat === "all") return quotes
   return quotes.filter(q => q.category === cat)
 }
 
-// export
+// export quotes
 function exportQuotes() {
   const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: "application/json" })
   const url = URL.createObjectURL(blob)
@@ -144,7 +143,7 @@ function exportQuotes() {
   URL.revokeObjectURL(url)
 }
 
-// import
+// import from file
 function importFromJsonFile(event) {
   const reader = new FileReader()
   reader.onload = e => {
@@ -166,28 +165,26 @@ function importFromJsonFile(event) {
   reader.readAsText(event.target.files[0])
 }
 
-// simulate periodic sync
-function startServerSync() {
-  setInterval(() => {
-    syncWithServer()
-  }, 30000) // every 30 seconds
+// 🟢 fetch quotes from mock server
+function fetchQuotesFromServer() {
+  return fetch(SERVER_URL)
+    .then(res => res.json())
+    .then(data => {
+      return data.slice(0, 5).map((p, i) => ({
+        text: p.title,
+        category: i % 2 === 0 ? "Server" : "Fetched"
+      }))
+    })
 }
 
-// sync logic (mock)
+// 🔁 sync logic
 function syncWithServer() {
   if (syncing) return
   syncing = true
 
-  fetch(SERVER_URL)
-    .then(res => res.json())
-    .then(data => {
-      // simulate server quotes (limit 5 for realism)
-      const serverQuotes = data.slice(0, 5).map((p, i) => ({
-        text: p.title,
-        category: i % 2 === 0 ? "Server" : "Fetched"
-      }))
-
-      // conflict resolution: server wins
+  fetchQuotesFromServer()
+    .then(serverQuotes => {
+      // simple conflict resolution: server wins
       const merged = [...quotes, ...serverQuotes].filter(
         (q, index, self) =>
           index === self.findIndex(o => o.text === q.text)
@@ -199,12 +196,19 @@ function syncWithServer() {
       showNotification("Quotes synced with server!")
     })
     .catch(() => {
-      showNotification("Server sync failed (offline mode).")
+      showNotification("Server sync failed. Working offline.")
     })
     .finally(() => syncing = false)
 }
 
-// simple notification banner
+// periodic auto-sync
+function startServerSync() {
+  setInterval(() => {
+    syncWithServer()
+  }, 30000)
+}
+
+// notification banner
 function showNotification(msg) {
   let note = document.getElementById("notify")
   if (!note) {
